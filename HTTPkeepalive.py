@@ -1,0 +1,60 @@
+import logging
+import requests
+import time
+import os
+import urllib3
+import sys
+from datetime import datetime
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+#logging.basicConfig(level=logging.DEBUG)
+
+#num of requests in each subprocess
+start_idx = 0
+end_idx = 10
+
+sleep_time = 1
+
+templogsdir = "templogs"
+
+if not os.path.exists(f"{templogsdir}"):
+    os.mkdir(f"{templogsdir}")
+
+process_id = sys.argv[1] if len(sys.argv) >= 2 else 0
+
+url = "http://localhost:5555/1"
+expected_string = "path"
+
+s = requests.Session()
+
+now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+count_errors = 0
+ids_errors = []
+
+try:
+    for i in range(start_idx, end_idx):
+        f = open(f"{templogsdir}/log-{process_id}.txt", "a")
+        parameter = f"{process_id}-{i}"
+        r = s.request("GET", f"{url}?a={parameter}", verify=False)
+        print(f"{now} - {parameter} - \n{r.text}")
+        f.write(f"{now} - {parameter} - \n{r.text}\n")
+        #print(r.headers['X-Served-By'])
+        time.sleep(sleep_time)
+        if not expected_string in r.text:
+            count_errors += 1
+            ids_errors.append(parameter)
+
+
+    print(f"Process ended {process_id}")
+    f.write(f"Process ended {process_id}\n")
+    print(f"Errors number: {count_errors}/{i+1} Errors IDs: {ids_errors}")
+    f.write(f"Errors number: {count_errors}/{i+1} Errors IDs: {ids_errors}\n")
+    f.close()
+
+except KeyboardInterrupt:
+    print(f"Process ended {process_id}")
+    f.write(f"Process ended {process_id}\n")
+    print(f"Errors number: {count_errors}/{i+1} Errors IDs: {ids_errors}")
+    f.write(f"Errors number: {count_errors}/{i+1} Errors IDs: {ids_errors}\n")
+    f.close()
