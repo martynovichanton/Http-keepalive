@@ -9,6 +9,9 @@ from datetime import datetime
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 #logging.basicConfig(level=logging.DEBUG)
 
+# requests.packages.urllib3.util.connection.HAS_IPV6 = False
+urllib3.util.connection.HAS_IPV6 = False
+
 #num of requests in each subprocess
 start_idx = 0
 end_idx = 10
@@ -27,18 +30,20 @@ expected_string = "path"
 
 s = requests.Session()
 
-now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-
 count_errors = 0
 ids_errors = []
 
 try:
     for i in range(start_idx, end_idx):
+        now = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         f = open(f"{templogsdir}/log-{process_id}.txt", "a")
         parameter = f"{process_id}-{i}"
+        start_time = time.perf_counter()
         r = s.request("GET", f"{url}?a={parameter}", verify=False)
-        print(f"{now} - {parameter} - \n{r.text}")
-        f.write(f"{now} - {parameter} - \n{r.text}\n")
+        end_time = time.perf_counter()
+        elapsed_time = round(end_time-start_time,3)
+        print(f"{now} - {parameter} - elapsed_time: {elapsed_time} - \n{r.text}")
+        f.write(f"{now} - {parameter} - elapsed_time: {elapsed_time} - \n{r.text}\n")
         #print(r.headers['X-Served-By'])
         time.sleep(sleep_time)
         if not expected_string in r.text:
